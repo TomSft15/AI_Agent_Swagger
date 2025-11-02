@@ -1,0 +1,5 @@
+venv/
+.env
+PWD
+*pycache*/
+ai_agent_platform.db

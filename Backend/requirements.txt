@@ -1,0 +1,38 @@
+# FastAPI and server
+fastapi
+uvicorn[standard]
+python-multipart
+
+# Database
+sqlalchemy
+alembic
+psycopg2-binary
+
+# Authentication
+python-jose[cryptography]
+passlib[bcrypt]
+bcrypt==4.0.1
+
+# Validation
+pydantic
+pydantic-settings
+email-validator
+
+# HTTP client for API calls
+httpx
+requests
+
+# Swagger/OpenAPI parsing
+prance
+openapi-spec-validator
+
+# Environment variables
+python-dotenv
+
+# CORS
+fastapi-cors
+
+# Testing
+pytest
+pytest-asyncio
+httpx
