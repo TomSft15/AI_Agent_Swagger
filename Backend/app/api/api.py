@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.endpoints import auth, users
+from app.api.endpoints import auth, users, swagger
 
 api_router = APIRouter()
 
@@ -15,4 +15,11 @@ api_router.include_router(
     users.router,
     prefix="/users",
     tags=["users"]
+)
+
+# Include swagger management routes
+api_router.include_router(
+    swagger.router,
+    prefix="/swagger",
+    tags=["swagger"]
 )
