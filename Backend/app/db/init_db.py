@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from app.core.security import get_password_hash
 from app.db.session import engine, Base
 from app.models.user import User
-
+from app.core.config import settings
 
 def init_db():
     """Initialize database tables."""
@@ -21,7 +21,7 @@ def create_first_superuser(db: Session):
             email="admin@example.com",
             username="admin",
             full_name="Admin User",
-            hashed_password=get_password_hash("fsf!pmsntx-ef?dzd"),
+            hashed_password=get_password_hash(settings.SUPERADMIN_PWD),
             is_active=True,
             is_superuser=True
         )
