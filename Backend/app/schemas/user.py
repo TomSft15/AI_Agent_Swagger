@@ -26,17 +26,33 @@ class UserUpdate(BaseModel):
     password: Optional[str] = Field(None, min_length=8, max_length=100)
 
 
+# Schema for setting LLM API keys
+class UserLLMKeysUpdate(BaseModel):
+    """Schema for updating user's LLM API keys."""
+    openai_api_key: Optional[str] = Field(None, min_length=20)
+    anthropic_api_key: Optional[str] = Field(None, min_length=20)
+
+
 # Schema for user response (without password)
 class User(UserBase):
     """Schema for user response."""
     id: int
     is_active: bool
     is_superuser: bool
+    has_openai_key: bool = False
+    has_anthropic_key: bool = False
     created_at: datetime
     updated_at: datetime
     
     class Config:
         from_attributes = True
+
+
+# Schema for user with masked keys
+class UserWithKeys(User):
+    """Schema for user with masked API keys."""
+    openai_api_key_masked: Optional[str] = None
+    anthropic_api_key_masked: Optional[str] = None
 
 
 # Schema for user in database (internal use)

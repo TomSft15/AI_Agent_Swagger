@@ -4,8 +4,9 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_active_user, get_current_superuser
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.user import User as UserSchema, UserUpdate
+from app.schemas.user import User as UserSchema, UserUpdate, UserWithKeys, UserLLMKeysUpdate
 from app.services.user_service import user_service
+from app.core.encryption import encrypt_api_key, decrypt_api_key, mask_api_key
 
 router = APIRouter()
 
@@ -23,7 +24,128 @@ def read_user_me(
     Returns:
         Current user information
     """
-    return current_user
+    # Add flags for API keys
+    user_dict = {
+        **current_user.__dict__,
+        "has_openai_key": bool(current_user.openai_api_key),
+        "has_anthropic_key": bool(current_user.anthropic_api_key)
+    }
+    return user_dict
+
+
+@router.get("/me/keys", response_model=UserWithKeys)
+def read_user_keys(
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Get current user profile with masked API keys.
+    
+    Args:
+        current_user: Current authenticated user
+        
+    Returns:
+        Current user information with masked keys
+    """
+    user_dict = {
+        **current_user.__dict__,
+        "has_openai_key": bool(current_user.openai_api_key),
+        "has_anthropic_key": bool(current_user.anthropic_api_key)
+    }
+    
+    # Add masked keys if they exist
+    if current_user.openai_api_key:
+        decrypted = decrypt_api_key(current_user.openai_api_key)
+        user_dict["openai_api_key_masked"] = mask_api_key(decrypted) if decrypted else None
+    
+    if current_user.anthropic_api_key:
+        decrypted = decrypt_api_key(current_user.anthropic_api_key)
+        user_dict["anthropic_api_key_masked"] = mask_api_key(decrypted) if decrypted else None
+    
+    return user_dict
+
+
+@router.put("/me/llm-keys", response_model=UserSchema)
+def update_llm_keys(
+    keys_update: UserLLMKeysUpdate,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Update user's LLM API keys.
+    
+    Args:
+        keys_update: API keys to update
+        current_user: Current authenticated user
+        db: Database session
+        
+    Returns:
+        Updated user information
+    """
+    # Encrypt and update keys
+    if keys_update.openai_api_key is not None:
+        if keys_update.openai_api_key.strip():
+            current_user.openai_api_key = encrypt_api_key(keys_update.openai_api_key)
+        else:
+            # Empty string = remove key
+            current_user.openai_api_key = None
+    
+    if keys_update.anthropic_api_key is not None:
+        if keys_update.anthropic_api_key.strip():
+            current_user.anthropic_api_key = encrypt_api_key(keys_update.anthropic_api_key)
+        else:
+            # Empty string = remove key
+            current_user.anthropic_api_key = None
+    
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
+    
+    # Return with flags
+    user_dict = {
+        **current_user.__dict__,
+        "has_openai_key": bool(current_user.openai_api_key),
+        "has_anthropic_key": bool(current_user.anthropic_api_key)
+    }
+    return user_dict
+
+
+@router.delete("/me/llm-keys/{provider}", response_model=UserSchema)
+def delete_llm_key(
+    provider: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Delete a specific LLM API key.
+    
+    Args:
+        provider: Provider name (openai or anthropic)
+        current_user: Current authenticated user
+        db: Database session
+        
+    Returns:
+        Updated user information
+    """
+    if provider == "openai":
+        current_user.openai_api_key = None
+    elif provider == "anthropic":
+        current_user.anthropic_api_key = None
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unknown provider: {provider}. Use 'openai' or 'anthropic'"
+        )
+    
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
+    
+    user_dict = {
+        **current_user.__dict__,
+        "has_openai_key": bool(current_user.openai_api_key),
+        "has_anthropic_key": bool(current_user.anthropic_api_key)
+    }
+    return user_dict
 
 
 @router.put("/me", response_model=UserSchema)
@@ -62,7 +184,13 @@ def update_user_me(
             )
     
     user = user_service.update(db, user=current_user, user_in=user_in)
-    return user
+    
+    user_dict = {
+        **user.__dict__,
+        "has_openai_key": bool(user.openai_api_key),
+        "has_anthropic_key": bool(user.anthropic_api_key)
+    }
+    return user_dict
 
 
 @router.get("/{user_id}", response_model=UserSchema)
@@ -91,4 +219,10 @@ def read_user_by_id(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
         )
-    return user
+    
+    user_dict = {
+        **user.__dict__,
+        "has_openai_key": bool(user.openai_api_key),
+        "has_anthropic_key": bool(user.anthropic_api_key)
+    }
+    return user_dict

@@ -3,7 +3,7 @@ Script to update database schema with new tables.
 Run this after adding new models.
 """
 from app.db.session import engine, Base
-from app.models import User, SwaggerDoc, Endpoint
+from app.models import User, SwaggerDoc, Endpoint, Agent
 
 
 def update_database():
@@ -17,8 +17,10 @@ def update_database():
     
     print("✅ Database schema updated successfully!")
     print("\nNew tables added:")
+    print("  - users")
     print("  - swagger_docs")
     print("  - endpoints")
+    print("  - agents")
     
 
 if __name__ == "__main__":

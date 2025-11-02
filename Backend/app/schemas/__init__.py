@@ -5,7 +5,9 @@ from app.schemas.user import (
     UserInDB,
     Token,
     TokenPayload,
-    RefreshTokenRequest
+    RefreshTokenRequest,
+    UserLLMKeysUpdate,
+    UserWithKeys
 )
 from app.schemas.swagger_doc import (
     SwaggerDoc,
@@ -22,6 +24,15 @@ from app.schemas.endpoint import (
     EndpointList,
     EndpointSimple
 )
+from app.schemas.agent import (
+    Agent,
+    AgentCreate,
+    AgentUpdate,
+    AgentDetail,
+    AgentList,
+    AgentSimple,
+    AgentCreateResult
+)
 
 __all__ = [
     "User",
@@ -31,6 +42,8 @@ __all__ = [
     "Token",
     "TokenPayload",
     "RefreshTokenRequest",
+    "UserLLMKeysUpdate",
+    "UserWithKeys",
     "SwaggerDoc",
     "SwaggerDocCreate",
     "SwaggerDocCreateDirect",
@@ -41,5 +54,12 @@ __all__ = [
     "Endpoint",
     "EndpointDetail",
     "EndpointList",
-    "EndpointSimple"
+    "EndpointSimple",
+    "Agent",
+    "AgentCreate",
+    "AgentUpdate",
+    "AgentDetail",
+    "AgentList",
+    "AgentSimple",
+    "AgentCreateResult"
 ]
