@@ -80,30 +80,32 @@ class SwaggerDocService:
         user_id: int,
         file: UploadFile,
         name: str,
-        description: Optional[str] = None
+        description: Optional[str] = None,
+        base_url: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Create Swagger doc from uploaded file.
-        
+
         Args:
             db: Database session
             user_id: Owner user ID
             file: Uploaded file
             name: Name for the document
             description: Optional description
-            
+            base_url: Optional base URL to override
+
         Returns:
             Dictionary with result info
         """
         # Read file content
         content = await file.read()
         content_str = content.decode('utf-8')
-        
+
         # Determine file format
         file_format = "json"
         if file.filename.endswith(('.yaml', '.yml')):
             file_format = "yaml"
-        
+
         # Parse content
         try:
             spec = swagger_parser.parse_content(content_str, file_format)
@@ -113,7 +115,7 @@ class SwaggerDocService:
                 "message": f"Failed to parse file: {str(e)}",
                 "errors": [str(e)]
             }
-        
+
         # Create doc from parsed spec
         return SwaggerDocService.create_from_spec(
             db=db,
@@ -121,7 +123,8 @@ class SwaggerDocService:
             name=name,
             description=description,
             spec=spec,
-            file_format=file_format
+            file_format=file_format,
+            base_url=base_url
         )
     
     @staticmethod
@@ -131,11 +134,12 @@ class SwaggerDocService:
         name: str,
         spec: Dict[str, Any],
         description: Optional[str] = None,
-        file_format: str = "json"
+        file_format: str = "json",
+        base_url: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Create Swagger doc from specification dictionary.
-        
+
         Args:
             db: Database session
             user_id: Owner user ID
@@ -143,23 +147,27 @@ class SwaggerDocService:
             spec: OpenAPI specification
             description: Optional description
             file_format: Format (json/yaml)
-            
+            base_url: Optional base URL to override
+
         Returns:
             Dictionary with result info
         """
         errors = []
-        
+
         # Validate spec
         is_valid, validation_error = swagger_parser.validate_openapi_spec(spec)
         if not is_valid:
             errors.append(f"Validation error: {validation_error}")
-        
+
         # Extract info
         openapi_version = swagger_parser.get_openapi_version(spec)
         if not openapi_version:
             errors.append("Could not determine OpenAPI/Swagger version")
-        
-        base_url = swagger_parser.get_base_url(spec)
+
+        # Use provided base_url or extract from spec
+        if not base_url:
+            base_url = swagger_parser.get_base_url(spec)
+
         api_info = swagger_parser.get_api_info(spec)
         
         # Use API title as name if not provided

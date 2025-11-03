@@ -44,12 +44,13 @@ class Agent(AgentBase):
     id: int
     user_id: int
     swagger_doc_id: int
+    swagger_doc_name: Optional[str] = None
     system_prompt: str
     available_functions: List[Dict[str, Any]]
     is_active: bool
     created_at: datetime
     updated_at: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -79,9 +80,21 @@ class AgentSimple(BaseModel):
     llm_model: str
     is_active: bool
     swagger_doc_id: int
-    
+    swagger_doc_name: Optional[str] = None
+    created_at: datetime
+    functions_count: int = 0
+
     class Config:
         from_attributes = True
+
+
+# Schema for simplified agent list response
+class AgentSimpleList(BaseModel):
+    """Schema for paginated list of simplified agents."""
+    items: List[AgentSimple]
+    total: int
+    page: int
+    page_size: int
 
 
 # Schema for agent creation result

@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.models.agent import Agent
 from app.models.swagger_doc import SwaggerDoc
 from app.models.endpoint import Endpoint
-from app.schemas.agent import AgentCreate, AgentUpdate
+from app.schemas.agent import AgentCreate, AgentUpdate, AgentSimple
 from app.services.agent_generator import agent_generator
 from app.services.swagger_doc_service import swagger_doc_service
 
@@ -21,19 +21,29 @@ class AgentService:
     def get_by_id(db: Session, agent_id: int, user_id: int) -> Optional[Agent]:
         """
         Get agent by ID (only if owned by user).
-        
+
         Args:
             db: Database session
             agent_id: Agent ID
             user_id: Owner user ID
-            
+
         Returns:
-            Agent or None
+            Agent or None with swagger_doc_name
         """
-        return db.query(Agent).filter(
+        agent = db.query(Agent).filter(
             Agent.id == agent_id,
             Agent.user_id == user_id
         ).first()
+
+        if agent:
+            # Get swagger doc name
+            swagger_doc = db.query(SwaggerDoc).filter(
+                SwaggerDoc.id == agent.swagger_doc_id
+            ).first()
+            if swagger_doc:
+                agent.swagger_doc_name = swagger_doc.name
+
+        return agent
     
     @staticmethod
     def get_all_by_user(
@@ -58,6 +68,64 @@ class AgentService:
             Agent.user_id == user_id
         ).offset(skip).limit(limit).all()
     
+    @staticmethod
+    def get_all_by_user_simple(
+        db: Session,
+        user_id: int,
+        skip: int = 0,
+        limit: int = 100
+    ) -> List[AgentSimple]:
+        """
+        Get all agents for a user (simplified/lightweight version).
+
+        Returns only essential fields for listing, avoiding heavy fields
+        like system_prompt and available_functions.
+
+        Args:
+            db: Database session
+            user_id: User ID
+            skip: Number of records to skip
+            limit: Maximum number of records to return
+
+        Returns:
+            List of AgentSimple with minimal data
+        """
+        # Query with join to get swagger_doc_name
+        agents = db.query(
+            Agent.id,
+            Agent.name,
+            Agent.description,
+            Agent.llm_provider,
+            Agent.llm_model,
+            Agent.is_active,
+            Agent.swagger_doc_id,
+            Agent.created_at,
+            Agent.available_functions,
+            SwaggerDoc.name.label('swagger_doc_name')
+        ).join(
+            SwaggerDoc, Agent.swagger_doc_id == SwaggerDoc.id
+        ).filter(
+            Agent.user_id == user_id
+        ).offset(skip).limit(limit).all()
+
+        # Convert to AgentSimple schema
+        result = []
+        for agent in agents:
+            result.append(AgentSimple(
+                id=agent.id,
+                name=agent.name,
+                description=agent.description,
+                llm_provider=agent.llm_provider,
+                llm_model=agent.llm_model,
+                is_active=agent.is_active,
+                swagger_doc_id=agent.swagger_doc_id,
+                swagger_doc_name=agent.swagger_doc_name,
+                created_at=agent.created_at,
+                functions_count=len(agent.available_functions) if agent.available_functions else 0
+            ))
+
+        return result
+
     @staticmethod
     def count_by_user(db: Session, user_id: int) -> int:
         """

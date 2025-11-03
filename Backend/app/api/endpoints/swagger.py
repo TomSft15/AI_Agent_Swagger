@@ -26,19 +26,21 @@ async def upload_swagger_file(
     file: UploadFile = File(...),
     name: str = Form(...),
     description: Optional[str] = Form(None),
+    base_url: Optional[str] = Form(None),
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
     """
     Upload a Swagger/OpenAPI file (JSON or YAML).
-    
+
     Args:
         file: Swagger/OpenAPI file (JSON or YAML)
         name: Name for the API documentation
         description: Optional description
+        base_url: Optional base URL to override the one in the spec
         current_user: Current authenticated user
         db: Database session
-        
+
     Returns:
         Parse result with created SwaggerDoc
     """
@@ -48,14 +50,15 @@ async def upload_swagger_file(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="File must be JSON or YAML format (.json, .yaml, .yml)"
         )
-    
+
     # Create from file
     result = await swagger_doc_service.create_from_file(
         db=db,
         user_id=current_user.id,
         file=file,
         name=name,
-        description=description
+        description=description,
+        base_url=base_url
     )
     
     if not result["success"]:
