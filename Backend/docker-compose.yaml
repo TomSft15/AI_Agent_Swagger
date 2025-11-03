@@ -3,15 +3,18 @@ services:
     build: .
     ports:
       - "8000:8000"
+    extra_hosts:
+    - "host.docker.internal:host-gateway"
+    env_file:
+      - .env
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/ai_agent_platform
-      - SECRET_KEY=your-super-secret-key-change-this-in-production
-      - DEBUG=True
     volumes:
       - ./app:/app/app
       - ./data:/app/data
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
   db:
@@ -24,6 +27,11 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:
