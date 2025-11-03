@@ -1,5 +1,5 @@
-from typing import List, Optional
-from pydantic import AnyHttpUrl, field_validator
+from typing import List, Optional, Union
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -22,17 +22,24 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str
     
-    # CORS
-    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
-    
-    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
+    # CORS - Use Union to prevent JSON parsing
+    BACKEND_CORS_ORIGINS: Union[str, List[str]] = ""
+
+    @field_validator("BACKEND_CORS_ORIGINS", mode="after")
     @classmethod
-    def assemble_cors_origins(cls, v: str | List[str]) -> List[str] | str:
-        if isinstance(v, str) and not v.startswith("["):
-            return [i.strip() for i in v.split(",")]
-        elif isinstance(v, (list, str)):
+    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
+        if isinstance(v, str):
+            if not v or v.strip() == "":
+                return []
+            # Remove brackets if present
+            v = v.strip()
+            if v.startswith("[") and v.endswith("]"):
+                v = v[1:-1]
+            # Split by comma and clean each URL
+            return [i.strip().strip('"').strip("'") for i in v.split(",") if i.strip()]
+        elif isinstance(v, list):
             return v
-        raise ValueError(v)
+        return []
     
     # LLM Configuration
     OPENAI_API_KEY: Optional[str] = None
@@ -46,7 +53,8 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=True,
-        extra="ignore"
+        extra="ignore",
+        env_parse_none_str="null"
     )
 
 
