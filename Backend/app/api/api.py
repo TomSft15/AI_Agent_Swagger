@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.endpoints import auth, users, swagger, agents
+from app.api.endpoints import auth, users, swagger, agents, chat
 
 api_router = APIRouter()
 
@@ -29,4 +29,11 @@ api_router.include_router(
     agents.router,
     prefix="/agents",
     tags=["agents"]
+)
+
+# Include chat routes
+api_router.include_router(
+    chat.router,
+    prefix="",
+    tags=["chat"]
 )

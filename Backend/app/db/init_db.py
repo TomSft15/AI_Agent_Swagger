@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from app.core.security import get_password_hash
 from app.db.session import engine, Base
-from app.models.user import User
+from app.models import User, SwaggerDoc, Endpoint, Agent
 from app.core.config import settings
 
 def init_db():
@@ -29,7 +29,7 @@ def create_first_superuser(db: Session):
         db.commit()
         db.refresh(superuser)
         print(f"Superuser created: {superuser.email}")
-        print("Password: admin123")
+        print(f"Password: {settings.SUPERADMIN_PWD}")
         print("⚠️  Please change the password immediately!")
     else:
         print("Database already has users. Skipping superuser creation.")

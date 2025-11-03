@@ -71,7 +71,12 @@ class LLMService:
             LLM response
         """
         provider = agent.llm_provider
-        
+        print(f"\n[LLM SERVICE] === Chat completion request ===")
+        print(f"[LLM SERVICE] Provider: {provider}")
+        print(f"[LLM SERVICE] Model: {agent.llm_model}")
+        print(f"[LLM SERVICE] Messages count: {len(messages)}")
+        print(f"[LLM SERVICE] Functions available: {len(functions) if functions else 0}")
+
         if provider == "openai":
             return await LLMService._openai_chat_completion(
                 user, agent, messages, functions
@@ -106,8 +111,10 @@ class LLMService:
         Returns:
             OpenAI response
         """
+        print(f"[LLM SERVICE - OPENAI] Getting API key...")
         api_key = LLMService.get_api_key(user, "openai")
-        
+        print(f"[LLM SERVICE - OPENAI] API key retrieved")
+
         # Prepare request
         payload = {
             "model": agent.llm_model,
@@ -115,7 +122,7 @@ class LLMService:
             "temperature": agent.temperature_float,
             "max_tokens": agent.max_tokens
         }
-        
+
         # Add functions if provided
         if functions:
             # Remove metadata from functions (OpenAI doesn't need it)
@@ -127,11 +134,13 @@ class LLMService:
                     "parameters": func["parameters"]
                 }
                 clean_functions.append(clean_func)
-            
+
             payload["functions"] = clean_functions
             payload["function_call"] = "auto"
-        
+            print(f"[LLM SERVICE - OPENAI] Prepared {len(clean_functions)} functions for OpenAI")
+
         # Make request to OpenAI
+        print(f"[LLM SERVICE - OPENAI] Sending request to OpenAI API...")
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 "https://api.openai.com/v1/chat/completions",
@@ -143,7 +152,13 @@ class LLMService:
                 timeout=60.0
             )
             response.raise_for_status()
-            return response.json()
+            result = response.json()
+            print(f"[LLM SERVICE - OPENAI] Response received from OpenAI")
+            if result.get("choices") and len(result["choices"]) > 0:
+                message = result["choices"][0].get("message", {})
+                has_function_call = "function_call" in message
+                print(f"[LLM SERVICE - OPENAI] Response has function call: {has_function_call}")
+            return result
     
     @staticmethod
     async def _anthropic_chat_completion(
@@ -164,13 +179,15 @@ class LLMService:
         Returns:
             Anthropic response formatted as OpenAI-like
         """
+        print(f"[LLM SERVICE - ANTHROPIC] Getting API key...")
         api_key = LLMService.get_api_key(user, "anthropic")
-        
+        print(f"[LLM SERVICE - ANTHROPIC] API key retrieved")
+
         # Convert messages format (OpenAI -> Anthropic)
         # Anthropic uses system parameter separately
         system_message = None
         anthropic_messages = []
-        
+
         for msg in messages:
             if msg["role"] == "system":
                 system_message = msg["content"]
@@ -179,7 +196,9 @@ class LLMService:
                     "role": msg["role"],
                     "content": msg["content"]
                 })
-        
+
+        print(f"[LLM SERVICE - ANTHROPIC] Converted {len(messages)} messages to Anthropic format")
+
         # Prepare request
         payload = {
             "model": agent.llm_model,
@@ -187,10 +206,10 @@ class LLMService:
             "max_tokens": agent.max_tokens,
             "temperature": agent.temperature_float
         }
-        
+
         if system_message:
             payload["system"] = system_message
-        
+
         # Add tools if provided (Anthropic uses "tools" instead of "functions")
         if functions:
             tools = []
@@ -202,8 +221,10 @@ class LLMService:
                 }
                 tools.append(tool)
             payload["tools"] = tools
-        
+            print(f"[LLM SERVICE - ANTHROPIC] Prepared {len(tools)} tools for Anthropic")
+
         # Make request to Anthropic
+        print(f"[LLM SERVICE - ANTHROPIC] Sending request to Anthropic API...")
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 "https://api.anthropic.com/v1/messages",
@@ -216,10 +237,13 @@ class LLMService:
                 timeout=60.0
             )
             response.raise_for_status()
-            
+
             # Convert Anthropic response to OpenAI format
             anthropic_response = response.json()
-            return LLMService._convert_anthropic_to_openai_format(anthropic_response)
+            print(f"[LLM SERVICE - ANTHROPIC] Response received from Anthropic")
+            result = LLMService._convert_anthropic_to_openai_format(anthropic_response)
+            print(f"[LLM SERVICE - ANTHROPIC] Converted to OpenAI format")
+            return result
     
     @staticmethod
     async def _ollama_chat_completion(
@@ -238,19 +262,21 @@ class LLMService:
         Returns:
             Ollama response formatted as OpenAI-like
         """
+        print(f"[LLM SERVICE - OLLAMA] Using local Ollama")
         # Ollama endpoint (default local)
         ollama_url = "http://localhost:11434/api/chat"
-        
+
         # Prepare request
         payload = {
             "model": agent.llm_model,
             "messages": messages,
             "stream": False
         }
-        
+
         # Ollama doesn't have native function calling like OpenAI
         # We can include functions in the system prompt as a workaround
         if functions:
+            print(f"[LLM SERVICE - OLLAMA] Adding {len(functions)} functions to system prompt")
             functions_description = "\n\nAvailable functions:\n"
             for func in functions:
                 functions_description += f"\n- {func['name']}: {func['description']}"
@@ -265,6 +291,7 @@ class LLMService:
                 })
         
         # Make request to Ollama
+        print(f"[LLM SERVICE - OLLAMA] Sending request to Ollama...")
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.post(
@@ -273,11 +300,15 @@ class LLMService:
                     timeout=120.0
                 )
                 response.raise_for_status()
-                
+
                 # Convert Ollama response to OpenAI format
                 ollama_response = response.json()
-                return LLMService._convert_ollama_to_openai_format(ollama_response)
+                print(f"[LLM SERVICE - OLLAMA] Response received from Ollama")
+                result = LLMService._convert_ollama_to_openai_format(ollama_response)
+                print(f"[LLM SERVICE - OLLAMA] Converted to OpenAI format")
+                return result
         except httpx.ConnectError:
+            print(f"[LLM SERVICE - OLLAMA] ERROR: Could not connect to Ollama")
             raise ValueError(
                 "Could not connect to Ollama. Make sure Ollama is running locally "
                 "(install from https://ollama.com and run 'ollama serve')"

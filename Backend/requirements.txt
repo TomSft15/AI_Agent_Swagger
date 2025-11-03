@@ -13,6 +13,9 @@ python-jose[cryptography]
 passlib[bcrypt]
 bcrypt==4.0.1
 
+# Encryption
+cryptography
+
 # Validation
 pydantic
 pydantic-settings
@@ -36,3 +39,5 @@ fastapi-cors
 pytest
 pytest-asyncio
 httpx
+
+uvicorn[standard]
