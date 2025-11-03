@@ -11,6 +11,7 @@ from app.schemas.agent import (
     AgentUpdate,
     AgentList,
     AgentSimple,
+    AgentSimpleList,
     AgentCreateResult
 )
 from app.services.agent_service import agent_service
@@ -56,7 +57,7 @@ def create_agent(
     )
 
 
-@router.get("/", response_model=AgentList)
+@router.get("/", response_model=AgentSimpleList)
 def list_agents(
     skip: int = 0,
     limit: int = 100,
@@ -64,21 +65,21 @@ def list_agents(
     db: Session = Depends(get_db)
 ):
     """
-    List all agents for current user.
-    
+    List all agents for current user (lightweight response).
+
     Args:
         skip: Number of records to skip
         limit: Maximum number of records to return
         current_user: Current authenticated user
         db: Database session
-        
+
     Returns:
-        Paginated list of agents
+        Paginated list of agents with minimal data
     """
-    agents = agent_service.get_all_by_user(db, current_user.id, skip, limit)
+    agents = agent_service.get_all_by_user_simple(db, current_user.id, skip, limit)
     total = agent_service.count_by_user(db, current_user.id)
-    
-    return AgentList(
+
+    return AgentSimpleList(
         items=agents,
         total=total,
         page=skip // limit + 1 if limit > 0 else 1,
