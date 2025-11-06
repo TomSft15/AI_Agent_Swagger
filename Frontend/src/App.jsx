@@ -11,6 +11,7 @@ import SwaggerView from './pages/SwaggerView';
 import AgentManager from './pages/AgentManager';
 import AgentCreate from './pages/AgentCreate';
 import AgentEdit from './pages/AgentEdit';
+import ManageKeys from './pages/ManageKeys';
 import './App.css';
 
 // Protected Route Component
@@ -65,7 +66,7 @@ const AppContent = () => {
         }
       />
       <Route
-        path="/agentManager"
+        path="/agent-manager"
         element={
           <ProtectedRoute>
             <AgentManager />
@@ -85,6 +86,14 @@ const AppContent = () => {
         element={
           <ProtectedRoute>
             <AgentEdit />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/manage-keys"
+        element={
+          <ProtectedRoute>
+            <ManageKeys />
           </ProtectedRoute>
         }
       />

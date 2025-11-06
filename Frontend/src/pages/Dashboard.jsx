@@ -36,7 +36,7 @@ const Dashboard = () => {
             <div className="card-icon">🤖</div>
             <h3>AI Agents</h3>
             <p>Create and configure AI agents from your APIs</p>
-            <button className="card-button" onClick={() => navigate('/agentManager')}>
+            <button className="card-button" onClick={() => navigate('/agent-manager')}>
               Manage Agents
             </button>
           </div>
@@ -52,7 +52,7 @@ const Dashboard = () => {
             <div className="card-icon">🔑</div>
             <h3>API Keys</h3>
             <p>Configure your LLM provider API keys</p>
-            <button className="card-button">Manage Keys</button>
+            <button className="card-button" onClick={() => navigate('/manage-keys')}>Manage Keys</button>
           </div>
         </div>
 
