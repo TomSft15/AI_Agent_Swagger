@@ -7,7 +7,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save, Bot, X, Check } from 'lucide-react';
 import { agentAPI } from '../services/api';
-import FunctionEditor from '../components/FunctionEditor';
 import './AgentEdit.css';
 
 const AgentEdit = () => {
@@ -329,12 +328,6 @@ const AgentEdit = () => {
             </div>
           </form>
         </div>
-
-        {/* Function Editor Section */}
-        <FunctionEditor
-          agentId={parseInt(agentId)}
-          availableFunctions={agent.available_functions || []}
-        />
       </div>
     </div>
   );

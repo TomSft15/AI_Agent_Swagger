@@ -286,6 +286,40 @@ export const swaggerAPI = {
       method: 'DELETE',
     });
   },
+
+  /**
+   * Get endpoint customizations for a swagger document
+   */
+  getCustomizations: async (id) => {
+    return apiRequest(`/swagger/${id}/customizations`);
+  },
+
+  /**
+   * Update endpoint custom description and/or enabled status
+   */
+  updateCustomization: async (swaggerId, operationId, customDescription, isEnabled) => {
+    const body = {};
+    if (customDescription !== undefined) {
+      body.custom_description = customDescription;
+    }
+    if (isEnabled !== undefined) {
+      body.is_enabled = isEnabled;
+    }
+
+    return apiRequest(`/swagger/${swaggerId}/customizations/${operationId}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
+  },
+
+  /**
+   * Delete endpoint customization (reset to default)
+   */
+  deleteCustomization: async (swaggerId, operationId) => {
+    return apiRequest(`/swagger/${swaggerId}/customizations/${operationId}`, {
+      method: 'DELETE',
+    });
+  },
 };
 
 /**
@@ -349,31 +383,11 @@ export const agentAPI = {
   },
 
   /**
-   * Get agent function customizations
+   * Regenerate agent from swagger
    */
-  getFunctions: async (agentId) => {
-    return apiRequest(`/agents/${agentId}/functions`);
-  },
-
-  /**
-   * Update function custom description
-   */
-  updateFunction: async (agentId, operationId, customDescription, isEnabled = true) => {
-    return apiRequest(`/agents/${agentId}/functions/${operationId}`, {
-      method: 'PUT',
-      body: JSON.stringify({
-        custom_description: customDescription,
-        is_enabled: isEnabled,
-      }),
-    });
-  },
-
-  /**
-   * Delete function customization (reset to default)
-   */
-  deleteFunction: async (agentId, operationId) => {
-    return apiRequest(`/agents/${agentId}/functions/${operationId}`, {
-      method: 'DELETE',
+  regenerate: async (agentId) => {
+    return apiRequest(`/agents/${agentId}/regenerate`, {
+      method: 'POST',
     });
   },
 };
