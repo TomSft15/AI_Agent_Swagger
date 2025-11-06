@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.models.agent import Agent
 from app.models.swagger_doc import SwaggerDoc
 from app.models.endpoint import Endpoint
+from app.models.endpoint_customization import EndpointCustomization
 from app.schemas.agent import AgentCreate, AgentUpdate, AgentSimple
 from app.services.agent_generator import agent_generator
 from app.services.swagger_doc_service import swagger_doc_service
@@ -16,7 +17,54 @@ from app.services.swagger_doc_service import swagger_doc_service
 
 class AgentService:
     """Service for managing AI agents."""
-    
+
+    @staticmethod
+    def _get_customizations_map(db: Session, swagger_doc_id: int) -> Dict[str, EndpointCustomization]:
+        """
+        Get endpoint customizations as a map.
+
+        Args:
+            db: Database session
+            swagger_doc_id: Swagger document ID
+
+        Returns:
+            Dict mapping operation_id to EndpointCustomization
+        """
+        customizations = db.query(EndpointCustomization).filter(
+            EndpointCustomization.swagger_doc_id == swagger_doc_id
+        ).all()
+
+        return {c.operation_id: c for c in customizations}
+
+    @staticmethod
+    def _filter_enabled_endpoints(db: Session, swagger_doc_id: int, endpoints: List[Endpoint]) -> List[Endpoint]:
+        """
+        Filter endpoints based on endpoint customizations.
+        Only return endpoints that are enabled (is_enabled=True or no customization).
+
+        Args:
+            db: Database session
+            swagger_doc_id: Swagger document ID
+            endpoints: List of all endpoints
+
+        Returns:
+            List of enabled endpoints only
+        """
+        # Get customizations map
+        customization_map = AgentService._get_customizations_map(db, swagger_doc_id)
+
+        # Filter endpoints
+        enabled_endpoints = []
+        for endpoint in endpoints:
+            # If there's a customization, check if it's enabled
+            # If no customization, endpoint is enabled by default
+            customization = customization_map.get(endpoint.operation_id)
+            is_enabled = customization.is_enabled if customization else True
+            if is_enabled:
+                enabled_endpoints.append(endpoint)
+
+        return enabled_endpoints
+
     @staticmethod
     def get_by_id(db: Session, agent_id: int, user_id: int) -> Optional[Agent]:
         """
@@ -181,24 +229,41 @@ class AgentService:
             agent_in.swagger_doc_id,
             user_id
         )
-        
+
         if not endpoints:
             return {
                 "success": False,
                 "message": "No endpoints found in Swagger document",
                 "errors": ["No endpoints available"]
             }
-        
+
+        # Get customizations for custom descriptions
+        customizations_map = AgentService._get_customizations_map(db, agent_in.swagger_doc_id)
+
+        # Filter only enabled endpoints
+        enabled_endpoints = AgentService._filter_enabled_endpoints(
+            db,
+            agent_in.swagger_doc_id,
+            endpoints
+        )
+
+        if not enabled_endpoints:
+            return {
+                "success": False,
+                "message": "No enabled endpoints found in Swagger document",
+                "errors": ["All endpoints are disabled"]
+            }
+
         # Generate system prompt
         try:
-            system_prompt = agent_generator.generate_system_prompt(swagger_doc, endpoints)
+            system_prompt = agent_generator.generate_system_prompt(swagger_doc, enabled_endpoints)
         except Exception as e:
             errors.append(f"Failed to generate system prompt: {str(e)}")
             system_prompt = f"You are an AI assistant for the {swagger_doc.name} API."
-        
-        # Generate function definitions
+
+        # Generate function definitions with custom descriptions
         try:
-            functions = agent_generator.generate_function_definitions(endpoints)
+            functions = agent_generator.generate_function_definitions(enabled_endpoints, customizations_map)
         except Exception as e:
             errors.append(f"Failed to generate functions: {str(e)}")
             functions = []
@@ -302,18 +367,35 @@ class AgentService:
         endpoints = db.query(Endpoint).filter(
             Endpoint.swagger_doc_id == agent.swagger_doc_id
         ).all()
-        
+
         if not endpoints:
             return {
                 "success": False,
                 "message": "No endpoints found",
                 "errors": ["No endpoints available"]
             }
-        
-        # Regenerate
+
+        # Get customizations for custom descriptions
+        customizations_map = AgentService._get_customizations_map(db, agent.swagger_doc_id)
+
+        # Filter only enabled endpoints
+        enabled_endpoints = AgentService._filter_enabled_endpoints(
+            db,
+            agent.swagger_doc_id,
+            endpoints
+        )
+
+        if not enabled_endpoints:
+            return {
+                "success": False,
+                "message": "No enabled endpoints found",
+                "errors": ["All endpoints are disabled"]
+            }
+
+        # Regenerate with custom descriptions
         try:
-            agent.system_prompt = agent_generator.generate_system_prompt(swagger_doc, endpoints)
-            agent.available_functions = agent_generator.generate_function_definitions(endpoints)
+            agent.system_prompt = agent_generator.generate_system_prompt(swagger_doc, enabled_endpoints)
+            agent.available_functions = agent_generator.generate_function_definitions(enabled_endpoints, customizations_map)
         except Exception as e:
             return {
                 "success": False,

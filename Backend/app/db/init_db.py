@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from app.core.security import get_password_hash
 from app.db.session import engine, Base
-from app.models import User, SwaggerDoc, Endpoint, Agent, AgentFunction
+from app.models import User, SwaggerDoc, Endpoint, Agent, EndpointCustomization
 from app.core.config import settings
 
 def init_db():

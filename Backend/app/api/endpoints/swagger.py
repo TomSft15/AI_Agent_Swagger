@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_active_user
 from app.db.session import get_db
 from app.models.user import User
+from app.models.endpoint_customization import EndpointCustomization as EndpointCustomizationModel
 from app.schemas.swagger_doc import (
     SwaggerDoc,
     SwaggerDocCreate,
@@ -15,6 +16,10 @@ from app.schemas.swagger_doc import (
     SwaggerParseResult
 )
 from app.schemas.endpoint import Endpoint, EndpointList
+from app.schemas.endpoint_customization import (
+    EndpointCustomization,
+    EndpointCustomizationUpdate
+)
 from app.services.swagger_doc_service import swagger_doc_service
 from app.services.swagger_parser import swagger_parser
 
@@ -296,3 +301,158 @@ def delete_swagger_doc(
         )
     
     swagger_doc_service.delete(db, doc)
+
+
+@router.get("/{doc_id}/customizations", response_model=List[EndpointCustomization])
+def get_endpoint_customizations(
+    doc_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get all endpoint customizations for a Swagger document.
+
+    Args:
+        doc_id: Swagger document ID
+        current_user: Current authenticated user
+        db: Database session
+
+    Returns:
+        List of endpoint customizations
+
+    Raises:
+        HTTPException: If document not found
+    """
+    # Verify document ownership
+    doc = swagger_doc_service.get_by_id(db, doc_id, current_user.id)
+    if not doc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Swagger document not found"
+        )
+
+    # Get all customizations for this swagger doc
+    customizations = db.query(EndpointCustomizationModel).filter(
+        EndpointCustomizationModel.swagger_doc_id == doc_id
+    ).all()
+
+    return customizations
+
+
+@router.put("/{doc_id}/customizations/{operation_id}", response_model=EndpointCustomization)
+def update_endpoint_customization(
+    doc_id: int,
+    operation_id: str,
+    customization_update: EndpointCustomizationUpdate,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Update custom description for a specific endpoint.
+
+    Args:
+        doc_id: Swagger document ID
+        operation_id: Endpoint operation ID
+        customization_update: Update data
+        current_user: Current authenticated user
+        db: Database session
+
+    Returns:
+        Updated endpoint customization
+
+    Raises:
+        HTTPException: If document not found
+    """
+    # Verify document ownership
+    doc = swagger_doc_service.get_by_id(db, doc_id, current_user.id)
+    if not doc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Swagger document not found"
+        )
+
+    # Find or create customization
+    customization = db.query(EndpointCustomizationModel).filter(
+        EndpointCustomizationModel.swagger_doc_id == doc_id,
+        EndpointCustomizationModel.operation_id == operation_id
+    ).first()
+
+    if not customization:
+        # Find the endpoint to get method and path
+        from app.models.endpoint import Endpoint
+        endpoint = db.query(Endpoint).filter(
+            Endpoint.swagger_doc_id == doc_id,
+            Endpoint.operation_id == operation_id
+        ).first()
+
+        if not endpoint:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Endpoint {operation_id} not found in this Swagger document"
+            )
+
+        # Create new customization
+        customization = EndpointCustomizationModel(
+            swagger_doc_id=doc_id,
+            endpoint_id=endpoint.id,
+            operation_id=operation_id,
+            method=endpoint.method,
+            path=endpoint.path,
+            custom_description=customization_update.custom_description,
+            is_enabled=customization_update.is_enabled if customization_update.is_enabled is not None else True
+        )
+        db.add(customization)
+    else:
+        # Update existing customization
+        if customization_update.custom_description is not None:
+            customization.custom_description = customization_update.custom_description
+        if customization_update.is_enabled is not None:
+            customization.is_enabled = customization_update.is_enabled
+
+    db.commit()
+    db.refresh(customization)
+
+    return customization
+
+
+@router.delete("/{doc_id}/customizations/{operation_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_endpoint_customization(
+    doc_id: int,
+    operation_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Delete custom description for a specific endpoint (reset to default).
+
+    Args:
+        doc_id: Swagger document ID
+        operation_id: Endpoint operation ID
+        current_user: Current authenticated user
+        db: Database session
+
+    Raises:
+        HTTPException: If document or customization not found
+    """
+    # Verify document ownership
+    doc = swagger_doc_service.get_by_id(db, doc_id, current_user.id)
+    if not doc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Swagger document not found"
+        )
+
+    # Find and delete customization
+    customization = db.query(EndpointCustomizationModel).filter(
+        EndpointCustomizationModel.swagger_doc_id == doc_id,
+        EndpointCustomizationModel.operation_id == operation_id
+    ).first()
+
+    if not customization:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Endpoint customization not found"
+        )
+
+    db.delete(customization)
+    db.commit()

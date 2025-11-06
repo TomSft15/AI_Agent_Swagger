@@ -4,9 +4,10 @@ Agent Generator Service
 This service generates AI agents from Swagger/OpenAPI documentation.
 It creates system prompts and function definitions for LLM function calling.
 """
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from app.models.swagger_doc import SwaggerDoc
 from app.models.endpoint import Endpoint
+from app.models.endpoint_customization import EndpointCustomization
 
 
 class AgentGeneratorService:
@@ -61,28 +62,33 @@ Available endpoints:
         return prompt
     
     @staticmethod
-    def generate_function_definitions(endpoints: List[Endpoint]) -> List[Dict[str, Any]]:
+    def generate_function_definitions(endpoints: List[Endpoint], customizations: Optional[Dict[str, EndpointCustomization]] = None) -> List[Dict[str, Any]]:
         """
         Generate OpenAI function calling definitions from endpoints.
-        
+
         Args:
             endpoints: List of endpoints
-            
+            customizations: Optional dict mapping operation_id to EndpointCustomization
+
         Returns:
             List of function definitions
         """
         functions = []
-        
+
         for endpoint in endpoints:
             function_name = AgentGeneratorService._create_function_name(endpoint)
-            
+
+            # Get custom description if available
+            customization = customizations.get(endpoint.operation_id) if customizations else None
+            description = AgentGeneratorService._create_function_description(endpoint, customization)
+
             # Build function definition
             function_def = {
                 "name": function_name,
-                "description": AgentGeneratorService._create_function_description(endpoint),
+                "description": description,
                 "parameters": AgentGeneratorService._create_function_parameters(endpoint)
             }
-            
+
             # Add metadata for execution
             function_def["_metadata"] = {
                 "endpoint_id": endpoint.id,
@@ -90,9 +96,9 @@ Available endpoints:
                 "path": endpoint.path,
                 "operation_id": endpoint.operation_id
             }
-            
+
             functions.append(function_def)
-        
+
         return functions
     
     @staticmethod
@@ -133,21 +139,26 @@ Available endpoints:
         return name
     
     @staticmethod
-    def _create_function_description(endpoint: Endpoint) -> str:
+    def _create_function_description(endpoint: Endpoint, customization: Optional[EndpointCustomization] = None) -> str:
         """
-        Create function description from endpoint.
-        
+        Create function description from endpoint, using custom description if available.
+
         Args:
             endpoint: Endpoint
-            
+            customization: Optional endpoint customization
+
         Returns:
             Function description
         """
-        description = endpoint.summary or endpoint.description or f"{endpoint.method} {endpoint.path}"
-        
+        # Use custom description if available, otherwise use endpoint description
+        if customization and customization.custom_description:
+            description = customization.custom_description
+        else:
+            description = endpoint.summary or endpoint.description or f"{endpoint.method} {endpoint.path}"
+
         if endpoint.deprecated:
             description += " (DEPRECATED - use alternative if available)"
-        
+
         return description
     
     @staticmethod
