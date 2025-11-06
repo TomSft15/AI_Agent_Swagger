@@ -7,6 +7,55 @@
 // Base URL for the backend API
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
+// Flag to prevent multiple simultaneous refresh attempts
+let isRefreshing = false;
+let refreshPromise = null;
+
+/**
+ * Refresh the access token using the refresh token
+ */
+async function refreshAccessToken() {
+  const refreshToken = localStorage.getItem('refresh_token');
+
+  if (!refreshToken) {
+    throw new Error('No refresh token available');
+  }
+
+  try {
+    console.log('[API] Refreshing access token...');
+
+    const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        refresh_token: refreshToken,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Token refresh failed');
+    }
+
+    const data = await response.json();
+
+    // Update tokens
+    localStorage.setItem('access_token', data.access_token);
+    localStorage.setItem('refresh_token', data.refresh_token);
+
+    console.log('[API] Access token refreshed successfully');
+    return data.access_token;
+
+  } catch (error) {
+    console.error('[API] Token refresh failed:', error);
+    // Clear tokens on refresh failure
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    throw error;
+  }
+}
+
 /**
  * Make an HTTP request to the API
  */
@@ -14,7 +63,7 @@ async function apiRequest(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
 
   // Get token from localStorage
-  const token = localStorage.getItem('access_token');
+  let token = localStorage.getItem('access_token');
 
   // Default headers
   const headers = {
@@ -39,6 +88,50 @@ async function apiRequest(endpoint, options = {}) {
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
+      // Handle 401 Unauthorized - try to refresh token
+      if (response.status === 401 && endpoint !== '/auth/refresh' && endpoint !== '/auth/login') {
+        console.log('[API] 401 Unauthorized - attempting token refresh');
+
+        // Prevent multiple simultaneous refresh attempts
+        if (!isRefreshing) {
+          isRefreshing = true;
+          refreshPromise = refreshAccessToken()
+            .finally(() => {
+              isRefreshing = false;
+              refreshPromise = null;
+            });
+        }
+
+        try {
+          // Wait for token refresh
+          const newToken = await refreshPromise;
+
+          // Retry the original request with new token
+          console.log('[API] Retrying request with new token');
+          headers['Authorization'] = `Bearer ${newToken}`;
+
+          const retryResponse = await fetch(url, {
+            ...options,
+            headers,
+          });
+
+          const retryData = await retryResponse.json().catch(() => ({}));
+
+          if (!retryResponse.ok) {
+            console.error(`[API] Retry failed ${retryResponse.status}:`, retryData);
+            throw new Error(retryData.detail || `HTTP ${retryResponse.status}: ${retryResponse.statusText}`);
+          }
+
+          console.log(`[API] Retry success:`, retryData);
+          return retryData;
+
+        } catch (refreshError) {
+          console.error('[API] Token refresh failed, redirecting to login');
+          // Token refresh failed, user needs to login again
+          throw new Error('Session expired. Please login again.');
+        }
+      }
+
       console.error(`[API] Error ${response.status}:`, data);
       throw new Error(data.detail || `HTTP ${response.status}: ${response.statusText}`);
     }
@@ -87,6 +180,34 @@ export const authAPI = {
       method: 'POST',
       body: JSON.stringify(userData),
     });
+  },
+
+  /**
+   * Refresh access token
+   */
+  refresh: async () => {
+    const refreshToken = localStorage.getItem('refresh_token');
+
+    if (!refreshToken) {
+      throw new Error('No refresh token available');
+    }
+
+    const response = await apiRequest('/auth/refresh', {
+      method: 'POST',
+      body: JSON.stringify({
+        refresh_token: refreshToken,
+      }),
+    });
+
+    // Store new tokens
+    if (response.access_token) {
+      localStorage.setItem('access_token', response.access_token);
+    }
+    if (response.refresh_token) {
+      localStorage.setItem('refresh_token', response.refresh_token);
+    }
+
+    return response;
   },
 
   /**
