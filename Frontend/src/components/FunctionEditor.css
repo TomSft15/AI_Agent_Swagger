@@ -1,0 +1,279 @@
+/* Function Editor Component Styles */
+
+.function-editor {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  margin-top: 24px;
+}
+
+.function-editor-header {
+  margin-bottom: 20px;
+}
+
+.function-editor-header h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0 0 8px 0;
+}
+
+.function-editor-subtitle {
+  font-size: 14px;
+  color: #718096;
+  margin: 0;
+}
+
+.function-editor-empty {
+  text-align: center;
+  padding: 40px;
+  color: #a0aec0;
+  font-size: 16px;
+}
+
+.function-editor-error {
+  padding: 12px 16px;
+  background: #fee;
+  border: 1px solid #fcc;
+  border-radius: 8px;
+  color: #c33;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+/* Functions List */
+.functions-list {
+  display: grid;
+  gap: 16px;
+}
+
+.function-item {
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px;
+  transition: all 0.2s;
+}
+
+.function-item:hover {
+  border-color: #cbd5e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.function-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.function-method-badge {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: #e2e8f0;
+  color: #4a5568;
+}
+
+.function-method-badge[data-method="get"] {
+  background: #d4edda;
+  color: #155724;
+}
+
+.function-method-badge[data-method="post"] {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.function-method-badge[data-method="put"] {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.function-method-badge[data-method="delete"] {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.function-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.function-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a202c;
+  margin-bottom: 4px;
+}
+
+.function-path {
+  font-size: 13px;
+  color: #718096;
+  font-family: 'Courier New', monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.custom-badge {
+  flex-shrink: 0;
+  padding: 4px 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Function Description */
+.function-description {
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.function-desc-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #4a5568;
+  margin-bottom: 12px;
+}
+
+.function-desc-text strong {
+  color: #667eea;
+  font-weight: 600;
+}
+
+.function-original-desc {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed #e2e8f0;
+  font-size: 13px;
+  color: #718096;
+}
+
+.no-description {
+  color: #a0aec0;
+}
+
+/* Function Actions */
+.function-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-edit,
+.btn-reset,
+.btn-save,
+.btn-cancel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-edit {
+  background: #667eea;
+  color: white;
+}
+
+.btn-edit:hover {
+  background: #5568d3;
+}
+
+.btn-reset {
+  background: #f7fafc;
+  color: #718096;
+  border: 1px solid #e2e8f0;
+}
+
+.btn-reset:hover {
+  background: #edf2f7;
+  border-color: #cbd5e0;
+}
+
+/* Edit Mode */
+.function-edit-mode {
+  margin-top: 12px;
+}
+
+.function-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.5;
+  resize: vertical;
+  transition: all 0.2s;
+}
+
+.function-textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.function-edit-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.btn-save {
+  background: #48bb78;
+  color: white;
+}
+
+.btn-save:hover:not(:disabled) {
+  background: #38a169;
+}
+
+.btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-cancel {
+  background: #f7fafc;
+  color: #718096;
+  border: 1px solid #e2e8f0;
+}
+
+.btn-cancel:hover:not(:disabled) {
+  background: #edf2f7;
+  border-color: #cbd5e0;
+}
+
+.btn-cancel:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .function-header {
+    flex-wrap: wrap;
+  }
+
+  .function-actions {
+    flex-direction: column;
+  }
+
+  .btn-edit,
+  .btn-reset,
+  .btn-save,
+  .btn-cancel {
+    width: 100%;
+    justify-content: center;
+  }
+}

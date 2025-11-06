@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save, Bot, X, Check } from 'lucide-react';
 import { agentAPI } from '../services/api';
+import FunctionEditor from '../components/FunctionEditor';
 import './AgentEdit.css';
 
 const AgentEdit = () => {
@@ -102,7 +103,7 @@ const AgentEdit = () => {
 
       // Redirect after 1 second
       setTimeout(() => {
-        navigate('/agentManager');
+        navigate('/agent-manager');
       }, 1000);
     } catch (err) {
       setError('Update failed: ' + err.message);
@@ -127,7 +128,7 @@ const AgentEdit = () => {
       <div className="agent-edit">
         <div className="error-container">
           <p>Agent not found</p>
-          <button onClick={() => navigate('/agentManager')} className="back-button">
+          <button onClick={() => navigate('/agent-manager')} className="back-button">
             Back to Agents
           </button>
         </div>
@@ -139,7 +140,7 @@ const AgentEdit = () => {
     <div className="agent-edit">
       <div className="edit-header">
         <div className="header-content">
-          <button onClick={() => navigate('/agentManager')} className="back-button">
+          <button onClick={() => navigate('/agent-manager')} className="back-button">
             <ArrowLeft size={20} />
             Back to Agents
           </button>
@@ -312,7 +313,7 @@ const AgentEdit = () => {
             <div className="form-actions">
               <button
                 type="button"
-                onClick={() => navigate('/agentManager')}
+                onClick={() => navigate('/agent-manager')}
                 className="cancel-button"
               >
                 Cancel
@@ -328,6 +329,12 @@ const AgentEdit = () => {
             </div>
           </form>
         </div>
+
+        {/* Function Editor Section */}
+        <FunctionEditor
+          agentId={parseInt(agentId)}
+          availableFunctions={agent.available_functions || []}
+        />
       </div>
     </div>
   );

@@ -141,7 +141,7 @@ const AgentCreate = () => {
 
       // Redirect to agent manager
       setTimeout(() => {
-        navigate('/agentManager');
+        navigate('/agent-manager');
       }, 1500);
     } catch (err) {
       setError('Failed to create agent: ' + err.message);
@@ -154,7 +154,7 @@ const AgentCreate = () => {
     <div className="agent-create">
       <div className="create-header">
         <div className="header-content">
-          <button onClick={() => navigate('/agentManager')} className="back-button">
+          <button onClick={() => navigate('/agent-manager')} className="back-button">
             <ArrowLeft size={20} />
             Back to Agents
           </button>
@@ -263,7 +263,7 @@ const AgentCreate = () => {
               <div className="form-actions">
                 <button
                   type="button"
-                  onClick={() => navigate('/agentManager')}
+                  onClick={() => navigate('/agent-manager')}
                   className="cancel-button"
                 >
                   Cancel

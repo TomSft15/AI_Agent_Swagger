@@ -175,7 +175,7 @@ export const agentAPI = {
    * Get all agents
    */
   getAll: async () => {
-    return apiRequest('/agents');
+    return apiRequest('/agents/');
   },
 
   /**
@@ -226,6 +226,35 @@ export const agentAPI = {
       }),
     });
   },
+
+  /**
+   * Get agent function customizations
+   */
+  getFunctions: async (agentId) => {
+    return apiRequest(`/agents/${agentId}/functions`);
+  },
+
+  /**
+   * Update function custom description
+   */
+  updateFunction: async (agentId, operationId, customDescription, isEnabled = true) => {
+    return apiRequest(`/agents/${agentId}/functions/${operationId}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        custom_description: customDescription,
+        is_enabled: isEnabled,
+      }),
+    });
+  },
+
+  /**
+   * Delete function customization (reset to default)
+   */
+  deleteFunction: async (agentId, operationId) => {
+    return apiRequest(`/agents/${agentId}/functions/${operationId}`, {
+      method: 'DELETE',
+    });
+  },
 };
 
 /**
@@ -250,10 +279,17 @@ export const userAPI = {
   },
 
   /**
+   * Get API keys (masked)
+   */
+  getKeys: async () => {
+    return apiRequest('/users/me/keys');
+  },
+
+  /**
    * Update API keys
    */
   updateKeys: async (keys) => {
-    return apiRequest('/users/me/keys', {
+    return apiRequest('/users/me/llm-keys', {
       method: 'PUT',
       body: JSON.stringify(keys),
     });

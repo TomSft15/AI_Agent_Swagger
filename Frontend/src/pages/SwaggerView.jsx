@@ -82,7 +82,7 @@ const SwaggerView = () => {
       <div className="swagger-view">
         <div className="error-container">
           <p>{error || 'Swagger document not found'}</p>
-          <button onClick={() => navigate('/agentManager')} className="back-button">
+          <button onClick={() => navigate('/agent-manager')} className="back-button">
             Back to Agents
           </button>
         </div>
@@ -94,7 +94,7 @@ const SwaggerView = () => {
     <div className="swagger-view">
       <div className="view-header">
         <div className="header-content">
-          <button onClick={() => navigate('/agentManager')} className="back-button">
+          <button onClick={() => navigate('/agent-manager')} className="back-button">
             <ArrowLeft size={20} />
             Back to Agents
           </button>
@@ -174,7 +174,7 @@ const SwaggerView = () => {
         {/* Actions */}
         <div className="actions-card">
           <button
-            onClick={() => navigate('/agentManager')}
+            onClick={() => navigate('/agent-manager')}
             className="action-button primary"
           >
             Back to Agents
