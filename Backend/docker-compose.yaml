@@ -2,7 +2,7 @@ services:
   backend:
     build: .
     ports:
-      - "8000:8000"
+      - "5000:5000"
     extra_hosts:
     - "host.docker.internal:host-gateway"
     env_file:
@@ -15,7 +15,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn app.main:app --host 0.0.0.0 --port 5000 --reload
 
   db:
     image: postgres:15-alpine
