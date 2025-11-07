@@ -3,13 +3,20 @@
  *
  * Main page after login - displays user info and navigation
  */
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import AgentSelectionModal from '../components/AgentSelectionModal';
 import './Dashboard.css';
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [showAgentModal, setShowAgentModal] = useState(false);
+
+  const handleSelectAgent = (agent) => {
+    navigate(`/chat/${agent.id}`, { state: { agentId: agent.id } });
+  };
 
   return (
     <div className="dashboard-container">
@@ -45,7 +52,7 @@ const Dashboard = () => {
             <div className="card-icon">💬</div>
             <h3>Chat</h3>
             <p>Interact with your AI agents through conversations</p>
-            <button className="card-button">Start Chat</button>
+            <button className="card-button" onClick={() => setShowAgentModal(true)}>Start Chat</button>
           </div>
 
           <div className="dashboard-card">
@@ -66,6 +73,12 @@ const Dashboard = () => {
           </ol>
         </div>
       </main>
+
+      <AgentSelectionModal
+        isOpen={showAgentModal}
+        onClose={() => setShowAgentModal(false)}
+        onSelectAgent={handleSelectAgent}
+      />
     </div>
   );
 };

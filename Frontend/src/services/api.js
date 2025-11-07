@@ -279,6 +279,16 @@ export const swaggerAPI = {
   },
 
   /**
+   * Update swagger document
+   */
+  update: async (id, updateData) => {
+    return apiRequest(`/swagger/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(updateData),
+    });
+  },
+
+  /**
    * Delete swagger document
    */
   delete: async (id) => {

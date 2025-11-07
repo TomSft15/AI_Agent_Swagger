@@ -5,7 +5,7 @@
  */
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, FileText, Globe, Calendar, Code, RefreshCw } from 'lucide-react';
+import { ArrowLeft, FileText, Globe, Calendar, Code, RefreshCw, Edit2, Save, X } from 'lucide-react';
 import { swaggerAPI, agentAPI } from '../services/api';
 import FunctionEditor from '../components/FunctionEditor';
 import './SwaggerView.css';
@@ -22,6 +22,9 @@ const SwaggerView = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [hasChanges, setHasChanges] = useState(false);
+  const [editingBaseUrl, setEditingBaseUrl] = useState(false);
+  const [baseUrlInput, setBaseUrlInput] = useState('');
+  const [savingBaseUrl, setSavingBaseUrl] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -79,6 +82,51 @@ const SwaggerView = () => {
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+  };
+
+  const handleEditBaseUrl = () => {
+    setBaseUrlInput(swagger.base_url || '');
+    setEditingBaseUrl(true);
+  };
+
+  const handleCancelEditBaseUrl = () => {
+    setEditingBaseUrl(false);
+    setBaseUrlInput('');
+  };
+
+  const handleSaveBaseUrl = async () => {
+    try {
+      setSavingBaseUrl(true);
+      setError('');
+
+      // Validate base_url has protocol
+      const baseUrl = baseUrlInput.trim();
+      if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+        setError('Base URL must start with http:// or https://');
+        setSavingBaseUrl(false);
+        return;
+      }
+
+      await swaggerAPI.update(swaggerId, {
+        base_url: baseUrl || null
+      });
+
+      // Update local state
+      setSwagger({ ...swagger, base_url: baseUrl });
+      setEditingBaseUrl(false);
+      setSuccess('Base URL updated successfully!');
+
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccess('');
+      }, 3000);
+
+    } catch (err) {
+      console.error('[SwaggerView] Update base_url error:', err);
+      setError('Failed to update base URL: ' + err.message);
+    } finally {
+      setSavingBaseUrl(false);
+    }
   };
 
   const handleSaveAndRegenerate = async () => {
@@ -189,14 +237,52 @@ const SwaggerView = () => {
               </span>
               <span className="info-value">{swagger.version || 'N/A'}</span>
             </div>
-            <div className="info-item">
+            <div className="info-item base-url-item">
               <span className="info-label">
                 <Globe size={16} />
                 Base URL
               </span>
-              <span className="info-value">
-                {swagger.base_url || 'Not specified'}
-              </span>
+              {editingBaseUrl ? (
+                <div className="base-url-edit">
+                  <input
+                    type="url"
+                    value={baseUrlInput}
+                    onChange={(e) => setBaseUrlInput(e.target.value)}
+                    placeholder="https://api.example.com"
+                    className="base-url-input"
+                    disabled={savingBaseUrl}
+                  />
+                  <button
+                    onClick={handleSaveBaseUrl}
+                    disabled={savingBaseUrl}
+                    className="icon-button save-button"
+                    title="Save base URL"
+                  >
+                    <Save size={16} />
+                  </button>
+                  <button
+                    onClick={handleCancelEditBaseUrl}
+                    disabled={savingBaseUrl}
+                    className="icon-button cancel-button"
+                    title="Cancel"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ) : (
+                <div className="base-url-display">
+                  <span className="info-value">
+                    {swagger.base_url || 'Not specified'}
+                  </span>
+                  <button
+                    onClick={handleEditBaseUrl}
+                    className="icon-button edit-button"
+                    title="Edit base URL"
+                  >
+                    <Edit2 size={14} />
+                  </button>
+                </div>
+              )}
             </div>
             <div className="info-item">
               <span className="info-label">

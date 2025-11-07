@@ -197,6 +197,7 @@ const AgentManager = () => {
                     <button
                       className="action-button action-chat"
                       title="Chat with agent"
+                      onClick={() => navigate(`/chat/${agent.id}`, { state: { agentId: agent.id } })}
                     >
                       Chat
                     </button>

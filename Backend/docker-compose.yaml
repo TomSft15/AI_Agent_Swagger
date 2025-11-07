@@ -16,6 +16,9 @@ services:
       db:
         condition: service_healthy
     command: uvicorn app.main:app --host 0.0.0.0 --port 5000 --reload
+    networks:
+      - default
+      - ai_agent_swagger
 
   db:
     image: postgres:15-alpine
@@ -35,3 +38,7 @@ services:
 
 volumes:
   postgres_data:
+
+networks:
+  ai_agent_swagger:
+    external: true

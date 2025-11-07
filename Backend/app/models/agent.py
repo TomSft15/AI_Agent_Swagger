@@ -16,6 +16,7 @@ class Agent(Base):
     # Basic info
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
+    welcome_message = Column(Text, nullable=True)  # Custom welcome message for chat
     
     # Agent configuration
     system_prompt = Column(Text, nullable=False)  # System prompt for LLM

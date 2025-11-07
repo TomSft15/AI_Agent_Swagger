@@ -29,6 +29,7 @@ const AgentCreate = () => {
   const [agentData, setAgentData] = useState({
     name: '',
     description: '',
+    welcome_message: '',
     llm_provider: 'openai',
     llm_model: 'gpt-4-turbo-preview',
     temperature: 70,
@@ -128,6 +129,7 @@ const AgentCreate = () => {
         swagger_doc_id: uploadedSwagger.id,
         name: agentData.name,
         description: agentData.description || null,
+        welcome_message: agentData.welcome_message || null,
         llm_provider: agentData.llm_provider,
         llm_model: agentData.llm_model,
         temperature: parseInt(agentData.temperature),
@@ -321,6 +323,19 @@ const AgentCreate = () => {
                   placeholder="What does this agent do?"
                   rows="3"
                 />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="welcome_message">Welcome Message</label>
+                <textarea
+                  id="welcome_message"
+                  name="welcome_message"
+                  value={agentData.welcome_message}
+                  onChange={handleAgentInputChange}
+                  placeholder="Hello! I'm your agent. How can I help you today?"
+                  rows="3"
+                />
+                <small>Custom message displayed when starting a chat with this agent</small>
               </div>
 
               <div className="form-row">

@@ -22,6 +22,7 @@ const AgentEdit = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
+    welcome_message: '',
     llm_provider: '',
     llm_model: '',
     temperature: 70,
@@ -44,6 +45,7 @@ const AgentEdit = () => {
           setFormData({
             name: response.name || '',
             description: response.description || '',
+            welcome_message: response.welcome_message || '',
             llm_provider: response.llm_provider || '',
             llm_model: response.llm_model || '',
             temperature: response.temperature || 70,
@@ -90,6 +92,7 @@ const AgentEdit = () => {
       const updateData = {
         name: formData.name,
         description: formData.description || null,
+        welcome_message: formData.welcome_message || null,
         llm_provider: formData.llm_provider,
         llm_model: formData.llm_model,
         temperature: parseInt(formData.temperature),
@@ -197,6 +200,19 @@ const AgentEdit = () => {
                   placeholder="Description of your agent"
                   rows="3"
                 />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="welcome_message">Welcome Message</label>
+                <textarea
+                  id="welcome_message"
+                  name="welcome_message"
+                  value={formData.welcome_message}
+                  onChange={handleInputChange}
+                  placeholder="Hello! I'm your agent. How can I help you today?"
+                  rows="3"
+                />
+                <small>Custom message displayed when starting a chat with this agent</small>
               </div>
 
               <div className="form-group checkbox-group">

@@ -116,7 +116,7 @@ The platform follows a modern microservices architecture:
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/yourusername/ai-agent-swagger.git
+git clone https://github.com/TomSft15/ai-agent-swagger.git
 cd AI_Agent_Swagger
 ```
 

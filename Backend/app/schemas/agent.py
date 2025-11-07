@@ -8,6 +8,7 @@ class AgentBase(BaseModel):
     """Base schema for AI agent."""
     name: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
+    welcome_message: Optional[str] = None
     llm_provider: str = Field(default="openai", pattern="^(openai|ollama|mistral)$")
     llm_model: str = Field(default="gpt-4-turbo-preview")
     temperature: int = Field(default=70, ge=0, le=100)
@@ -20,6 +21,7 @@ class AgentCreate(BaseModel):
     swagger_doc_id: int
     name: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
+    welcome_message: Optional[str] = None
     llm_provider: str = Field(default="openai", pattern="^(openai|ollama|mistral)$")
     llm_model: str = Field(default="gpt-4-turbo-preview")
     temperature: int = Field(default=70, ge=0, le=100)
@@ -31,6 +33,7 @@ class AgentUpdate(BaseModel):
     """Schema for updating agent information."""
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = None
+    welcome_message: Optional[str] = None
     llm_provider: Optional[str] = Field(None, pattern="^(openai|ollama|mistral)$")
     llm_model: Optional[str] = None
     temperature: Optional[int] = Field(None, ge=0, le=100)
@@ -76,6 +79,7 @@ class AgentSimple(BaseModel):
     id: int
     name: str
     description: Optional[str]
+    welcome_message: Optional[str] = None
     llm_provider: str
     llm_model: str
     is_active: bool
